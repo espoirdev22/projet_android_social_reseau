@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AndroidProject</string>
+
+    <string name="my_map_api_key">AIzaSyAm9x3yphrcOxlBH4HNhi2rKYXFaxUNKGI</string>
+</resources>

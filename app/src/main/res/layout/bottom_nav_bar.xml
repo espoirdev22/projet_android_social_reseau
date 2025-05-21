@@ -1,0 +1,81 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomNav"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:elevation="8dp"
+    android:orientation="horizontal"
+    android:layout_marginBottom="35dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="16dp">
+
+    <!-- Bouton Accueil -->
+    <LinearLayout
+        android:id="@+id/nav_home"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/nav_icon_home"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_home"/>
+
+        <TextView
+            android:id="@+id/nav_text_home"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accueil"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <!-- Bouton Explorer -->
+    <LinearLayout
+        android:id="@+id/nav_explore"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/nav_icon_explore"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_explorer"/>
+
+        <TextView
+            android:id="@+id/nav_text_explore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Explorer"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <!-- Bouton Notifications -->
+    <LinearLayout
+        android:id="@+id/nav_notifications"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/nav_icon_notifications"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_notifications"/>
+
+        <TextView
+            android:id="@+id/nav_text_notifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Notifications"
+            android:textSize="12sp"/>
+    </LinearLayout>
+</LinearLayout>
