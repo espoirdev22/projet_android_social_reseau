@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class ApiClient {
     private static final String TAG = "ApiClient";
     // Utilisez l'URL sans le segment 'api/' si vos logs montrent des appels à /api/events
-    private static final String BASE_URL = "http://192.168.1.6:8000/";
+    private static final String BASE_URL = "http://192.168.1.3:8000/";
 
     private static Retrofit retrofit = null;
 

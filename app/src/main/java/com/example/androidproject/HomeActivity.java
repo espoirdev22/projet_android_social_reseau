@@ -4,11 +4,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,7 +28,8 @@ import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private SearchView homeSearch;
+    private TextView titleView;
+    private TextView profileInitial; // Ajout du TextView pour l'initiale
     private View nav_home;
     private View nav_explore;
     private View nav_notifications;
@@ -37,7 +39,6 @@ public class HomeActivity extends AppCompatActivity {
     private List<Event> userEvents = new ArrayList<>();
     private ApiService apiService;
 
-    // Utilisation de la même approche que LoginActivity pour la gestion du token
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "eventia_prefs";
     private static final String TOKEN_KEY = "auth_token";
@@ -52,9 +53,7 @@ public class HomeActivity extends AppCompatActivity {
 
         apiService = ApiClient.getClient().create(ApiService.class);
 
-        // Initialiser SharedPreferences comme dans LoginActivity
         initializeSharedPreferences();
-
         initViews();
 
         if (getSupportActionBar() != null) {
@@ -63,10 +62,9 @@ public class HomeActivity extends AppCompatActivity {
 
         setupRecyclerView();
         setupNavigation();
-        setupSearchView();
         setupAddEventButton();
+        displayUserInitial(); // Ajout de l'appel à la méthode pour afficher l'initiale
 
-        // Vérifier l'authentification avant de charger les événements
         checkAuthenticationAndLoadEvents();
     }
 
@@ -75,12 +73,28 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        homeSearch = findViewById(R.id.homeSearch);
         nav_home = findViewById(R.id.nav_home);
         nav_explore = findViewById(R.id.nav_explore);
         nav_notifications = findViewById(R.id.nav_notifications);
         fabAddEvent = findViewById(R.id.fabAddEvent);
         upcomingEventsRecyclerView = findViewById(R.id.upcomingEventsRecyclerView);
+        profileInitial = findViewById(R.id.profileInitial); // Récupération du TextView pour l'initiale
+
+        // Ajout d'un listener de clic sur le profil
+        profileInitial.setOnClickListener(v -> showLogoutDialog());
+    }
+
+    // Nouvelle méthode pour afficher l'initiale de l'utilisateur
+    private void displayUserInitial() {
+        String email = getUserEmail();
+        if (email != null && !email.isEmpty()) {
+            // Prendre la première lettre en majuscule
+            String initial = String.valueOf(email.charAt(0)).toUpperCase();
+            profileInitial.setText(initial);
+        } else {
+            // Afficher un placeholder si aucun email n'est disponible
+            profileInitial.setText("?");
+        }
     }
 
     private void setupRecyclerView() {
@@ -91,7 +105,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private void setupNavigation() {
         nav_home.setOnClickListener(v -> {
-            // Déjà sur Home, pas besoin de rediriger
+            // Déjà sur Home
         });
 
         nav_explore.setOnClickListener(v -> {
@@ -99,25 +113,7 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         nav_notifications.setOnClickListener(v -> {
-            // Gérer la navigation vers les notifications
-        });
-    }
-
-    private void setupSearchView() {
-        homeSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                searchEvents(query);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                if (newText.isEmpty()) {
-                    loadUserEvents();
-                }
-                return false;
-            }
+            // Aller vers les notifications
         });
     }
 
@@ -129,11 +125,9 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void checkAuthenticationAndLoadEvents() {
-        // Utiliser la même méthode que LoginActivity pour récupérer le token
         String token = getAuthToken();
 
         if (token == null || token.isEmpty()) {
-            // Rediriger immédiatement vers la page de connexion
             redirectToLogin();
             return;
         }
@@ -142,7 +136,6 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void loadUserEvents() {
-        // Utiliser la même méthode que LoginActivity pour récupérer le token
         String token = getAuthToken();
 
         if (token == null || token.isEmpty()) {
@@ -171,7 +164,6 @@ public class HomeActivity extends AppCompatActivity {
                         Toast.makeText(HomeActivity.this, message, Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Erreur de réponse - vérifier si c'est un problème d'authentification
                     if (response.code() == 401) {
                         Toast.makeText(HomeActivity.this, "Session expirée", Toast.LENGTH_SHORT).show();
                         redirectToLogin();
@@ -188,66 +180,24 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void searchEvents(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            loadUserEvents();
-            return;
-        }
-
-        apiService.searchEvents(query).enqueue(new Callback<ApiResponse<List<Event>>>() {
-            @Override
-            public void onResponse(Call<ApiResponse<List<Event>>> call, Response<ApiResponse<List<Event>>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    ApiResponse<List<Event>> apiResponse = response.body();
-
-                    if (apiResponse.isSuccess() && apiResponse.getData() != null) {
-                        userEvents.clear();
-                        userEvents.addAll(apiResponse.getData());
-                        eventAdapter.notifyDataSetChanged();
-
-                        if (userEvents.isEmpty()) {
-                            Toast.makeText(HomeActivity.this, "Aucun résultat trouvé", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(HomeActivity.this, "Erreur lors de la recherche", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(HomeActivity.this, "Erreur lors de la recherche", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<ApiResponse<List<Event>>> call, Throwable t) {
-                Toast.makeText(HomeActivity.this, "Erreur de connexion lors de la recherche", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     private void redirectToLogin() {
-        // Utiliser la même méthode que LoginActivity pour la déconnexion
         logout();
-
-        // Créer l'intent pour la page de connexion
         Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-
-        // Ces flags nettoient la pile d'activités pour éviter de revenir à HomeActivity
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
         startActivity(intent);
-        finish(); // Fermer HomeActivity
+        finish();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Recharger les événements uniquement si l'utilisateur est connecté
         String token = getAuthToken();
         if (token != null && !token.isEmpty()) {
             loadUserEvents();
+            displayUserInitial(); // Mise à jour de l'initiale à chaque reprise de l'activité
         }
     }
 
-    // Méthodes utilitaires identiques à celles de LoginActivity
     private String getAuthToken() {
         return sharedPreferences.getString(TOKEN_KEY, null);
     }
@@ -264,7 +214,6 @@ public class HomeActivity extends AppCompatActivity {
         sharedPreferences.edit().clear().apply();
     }
 
-    // Méthodes statiques pour l'accès depuis d'autres activités (identiques à LoginActivity)
     public static String getAuthToken(android.content.Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
         return prefs.getString(TOKEN_KEY, null);
@@ -278,5 +227,22 @@ public class HomeActivity extends AppCompatActivity {
     public static void logout(android.content.Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
         prefs.edit().clear().apply();
+    }
+
+    // Méthode pour afficher la boîte de dialogue de déconnexion
+    private void showLogoutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Profil");
+        builder.setMessage("Voulez-vous vous déconnecter ?");
+        builder.setPositiveButton("Déconnexion", (dialog, which) -> {
+            // Déconnecter l'utilisateur
+            logout();
+            Toast.makeText(HomeActivity.this, "Déconnexion réussie", Toast.LENGTH_SHORT).show();
+            redirectToLogin();
+        });
+        builder.setNegativeButton("Annuler", (dialog, which) -> {
+            dialog.dismiss();
+        });
+        builder.show();
     }
 }
