@@ -3,6 +3,7 @@ package com.example.androidproject.model;
 import android.net.Uri;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.annotations.SerializedName;
 
 public class Event {
     private String id;
@@ -13,8 +14,11 @@ public class Event {
     private String image;
     private double latitude;
     private double longitude;
-
+    @SerializedName("created_at")
+    private String createdAt;
     public Event() {}
+
+
 
     public Event(String id, String titre, String description, String date,
                  String lieu, String image, double latitude, double longitude) {
@@ -120,5 +124,11 @@ public class Event {
     public Uri getImageUri() {
         return imageUri;
     }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+
 
 }

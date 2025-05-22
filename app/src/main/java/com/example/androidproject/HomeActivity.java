@@ -3,11 +3,13 @@ package com.example.androidproject;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.app.AlertDialog;
-
+import android.util.Log;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,6 +30,7 @@ import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
 
+    private static final String TAG = "HomeActivity";
     private TextView titleView;
     private TextView profileInitial; // Ajout du TextView pour l'initiale
     private View nav_home;
@@ -38,7 +41,7 @@ public class HomeActivity extends AppCompatActivity {
     private EventAdapter eventAdapter;
     private List<Event> userEvents = new ArrayList<>();
     private ApiService apiService;
-
+    private BottomNavHelper bottomNavHelper;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "eventia_prefs";
     private static final String TOKEN_KEY = "auth_token";
@@ -64,9 +67,10 @@ public class HomeActivity extends AppCompatActivity {
         setupNavigation();
         setupAddEventButton();
         displayUserInitial(); // Ajout de l'appel à la méthode pour afficher l'initiale
-
+        setupBottomNavigation();
         checkAuthenticationAndLoadEvents();
     }
+
 
     private void initializeSharedPreferences() {
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -97,6 +101,23 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+
+    private void setupBottomNavigation() {
+        // Récupération correcte des vues de navigation
+        View bottomNavContainer = findViewById(R.id.bottomNavContainer);
+        if (bottomNavContainer != null) {
+            LinearLayout homeNav = bottomNavContainer.findViewById(R.id.nav_home);
+            LinearLayout exploreNav = bottomNavContainer.findViewById(R.id.nav_explore);
+            LinearLayout notificationsNav = bottomNavContainer.findViewById(R.id.nav_notifications);
+
+            if (homeNav != null && exploreNav != null && notificationsNav != null) {
+                bottomNavHelper = new BottomNavHelper(this, this);
+                bottomNavHelper.setupBottomNavigation(homeNav, exploreNav, notificationsNav, R.id.nav_home);
+            } else {
+                Log.e(TAG, "Bottom navigation views not found");
+            }
+        }
+    }
     private void setupRecyclerView() {
         eventAdapter = new EventAdapter(userEvents);
         upcomingEventsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -113,7 +134,7 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         nav_notifications.setOnClickListener(v -> {
-            // Aller vers les notifications
+            startActivity(new Intent(this, NotificationsActivity.class));
         });
     }
 

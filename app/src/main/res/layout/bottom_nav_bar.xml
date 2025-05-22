@@ -46,7 +46,7 @@
             android:id="@+id/nav_icon_explore"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@drawable/ic_explorer"/>
+            android:src="@drawable/ic_explorer" />
 
         <TextView
             android:id="@+id/nav_text_explore"

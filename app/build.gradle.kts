@@ -39,6 +39,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(libs.appcompat)  // Keep only one of these appcompat declarations
     // implementation(libs.androidx.appcompat)  // Remove this duplicate
+    implementation ("com.pusher:pusher-java-client:2.4.2") // Version stable
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)

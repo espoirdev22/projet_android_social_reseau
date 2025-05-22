@@ -6,6 +6,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,12 +44,14 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
 
     private static final String TAG = "EventMapActivity";
     private final int FINE_PERMISSION_CODE = 1;
-
+    private BottomNavHelper bottomNavHelper;
     // UI Components
     private SearchView mapSearchView;
     private ProgressBar loadingIndicator;
     private TextView emptyView;
-
+    private View nav_home;
+    private View nav_explore;
+    private View nav_notifications;
     // Map and Location
     private GoogleMap myMap;
     private Map<Marker, Event> markerEventMap = new HashMap<>();
@@ -91,30 +94,44 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         // Load data
         getLastLocation();
         loadEvents();
-
         setupBottomNavigation();
     }
+
+    private void setupNavigation() {
+        nav_home.setOnClickListener(v -> {
+            startActivity(new Intent(this, EventMapActivity.class));
+        });
+
+        nav_explore.setOnClickListener(v -> {
+
+        });
+
+        nav_notifications.setOnClickListener(v -> {
+            startActivity(new Intent(this, NotificationsActivity.class));
+        });
+    }
     private void setupBottomNavigation() {
-        // Accueil
-        findViewById(R.id.nav_home).setOnClickListener(v -> {
-            Intent intent = new Intent(this, HomeActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
-        });
+        // Récupération correcte des vues de navigation
+        View bottomNavContainer = findViewById(R.id.bottomNavContainer);
+        if (bottomNavContainer != null) {
+            LinearLayout homeNav = bottomNavContainer.findViewById(R.id.nav_home);
+            LinearLayout exploreNav = bottomNavContainer.findViewById(R.id.nav_explore);
+            LinearLayout notificationsNav = bottomNavContainer.findViewById(R.id.nav_notifications);
 
-        // Explorer (déjà sur cette activité)
-        findViewById(R.id.nav_explore).setOnClickListener(v -> {
-            // Ne rien faire car déjà sur cette page
-        });
-        // Notifications
-       //findViewById(R.id.nav_notifications).setOnClickListener(v -> {
-           // startActivity(new Intent(this, NotificationsActivity.class));
-        //});
-
+            if (homeNav != null && exploreNav != null && notificationsNav != null) {
+                bottomNavHelper = new BottomNavHelper(this, this);
+                bottomNavHelper.setupBottomNavigation(homeNav, exploreNav, notificationsNav, R.id.nav_explore);
+            } else {
+                Log.e(TAG, "Bottom navigation views not found");
+            }
+        }
     }
     private void initViews() {
         // Search view
+        nav_home = findViewById(R.id.nav_home);
+        nav_explore = findViewById(R.id.nav_explore);
+        nav_notifications = findViewById(R.id.nav_notifications);
+
         mapSearchView = findViewById(R.id.mapSearch);
         mapSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override

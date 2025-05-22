@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/dialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Titre de la notification"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/dialogMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Message de la notification"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:layout_marginBottom="12dp"
+        android:lineSpacingExtra="4dp" />
+
+    <TextView
+        android:id="@+id/dialogTimestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Il y a 5 minutes"
+        android:textSize="14sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginBottom="8dp" />
+
+</LinearLayout>

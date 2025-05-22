@@ -10,7 +10,7 @@
     <color name="active_color">#FF6347</color>    <!-- Couleur pour l'onglet actif -->
     <color name="inactive_color">#777777</color>  <!-- Couleur pour les onglets inactifs -->
     <color name="nav_background">#FFFFFF</color>  <!-- Fond de la barre de navigation -->
-
+    <color name="orange">#FF9800</color>
     <!-- Autres couleurs optionnelles -->
 
 </resources>
