@@ -93,6 +93,11 @@ public class NotificationsActivity extends AppCompatActivity implements Notifica
         // Charger immédiatement les données mockées
         loadMockNotifications();
 
+        // Masquer la barre d'action
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         // Ensuite essayer l'API (qui peut échouer)
         loadNotifications();
 

@@ -5,7 +5,9 @@ import android.net.Uri;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.annotations.SerializedName;
 
-public class Event {
+import java.io.Serializable;
+
+public class Event implements Serializable {
     private String id;
     private String titre;
     private String description;
@@ -14,6 +16,11 @@ public class Event {
     private String image;
     private double latitude;
     private double longitude;
+
+    private String time; // Ajouté pour correspondre à getT()
+    private String eventType; // Ajouté
+    private String price; // Ajouté
+    private String organizerName; // Ajouté
     @SerializedName("created_at")
     private String createdAt;
     public Event() {}
@@ -129,6 +136,46 @@ public class Event {
         return createdAt;
     }
 
+    public String getT() {
+        return time;
+    }
 
+    public void setT(String time) {
+        this.time = time;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public String getFormattedPrice() {
+        return price != null ? price : "Gratuit";
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
+    }
+
+    public String getOrganizerName() {
+        return organizerName != null ? organizerName : "Organisateur";
+    }
+
+    public void setOrganizerName(String organizerName) {
+        this.organizerName = organizerName;
+    }
+
+    public String getImageUrl() {
+        return image;
+    }
+
+
+
+    public String getLocation() {
+        return lieu;
+    }
 
 }
