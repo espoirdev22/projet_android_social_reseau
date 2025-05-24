@@ -47,6 +47,12 @@ public class RegisterActivity extends AppCompatActivity {
             return insets;
         });
 
+
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         initializeFields();
 
         signupButton.setOnClickListener(new View.OnClickListener() {

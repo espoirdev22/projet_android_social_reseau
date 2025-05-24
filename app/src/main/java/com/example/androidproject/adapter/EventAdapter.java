@@ -10,6 +10,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.androidproject.EventDetailActivity;
 import com.example.androidproject.R;
 import com.example.androidproject.model.Event;
@@ -76,7 +77,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         // Gestion des images si présentes
         if (holder.eventImage != null && event.getImage() != null && !event.getImage().isEmpty()) {
             // Ici vous pouvez utiliser Glide, Picasso ou une autre bibliothèque pour charger l'image
-            // Glide.with(holder.itemView.getContext()).load(event.getImage()).into(holder.eventImage);
+            Glide.with(holder.itemView.getContext()).load(event.getImage()).into(holder.eventImage);
         }
 
         // Listener pour ouvrir la page de détail

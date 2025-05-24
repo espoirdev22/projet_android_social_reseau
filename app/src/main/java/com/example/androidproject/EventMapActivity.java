@@ -15,7 +15,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.androidproject.adapter.EventCardsAdapter;
 import com.example.androidproject.api.ApiClient;
 import com.example.androidproject.api.ApiService;
 import com.example.androidproject.model.ApiResponse;
@@ -40,26 +43,32 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class EventMapActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class EventMapActivity extends AppCompatActivity implements OnMapReadyCallback, EventCardsAdapter.OnEventCardClickListener {
 
     private static final String TAG = "EventMapActivity";
     private final int FINE_PERMISSION_CODE = 1;
     private BottomNavHelper bottomNavHelper;
+
     // UI Components
     private SearchView mapSearchView;
     private ProgressBar loadingIndicator;
     private TextView emptyView;
+    private RecyclerView eventsRecyclerView;
+    private EventCardsAdapter eventCardsAdapter;
     private View nav_home;
     private View nav_explore;
     private View nav_notifications;
+
     // Map and Location
     private GoogleMap myMap;
     private Map<Marker, Event> markerEventMap = new HashMap<>();
+    private Map<Event, Marker> eventMarkerMap = new HashMap<>();
     private Location currentLocation;
     private FusedLocationProviderClient fusedLocationProviderClient;
 
     // Data
     private List<Event> eventList = new ArrayList<>();
+    private List<Event> filteredEventList = new ArrayList<>();
 
     // API Service
     private ApiService apiService;
@@ -80,6 +89,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
 
         // Initialize views
         initViews();
+        setupRecyclerView();
 
         // Set up map
         SupportMapFragment mapFragment = (SupportMapFragment)
@@ -110,6 +120,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
             startActivity(new Intent(this, NotificationsActivity.class));
         });
     }
+
     private void setupBottomNavigation() {
         // Récupération correcte des vues de navigation
         View bottomNavContainer = findViewById(R.id.bottomNavContainer);
@@ -126,6 +137,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
             }
         }
     }
+
     private void initViews() {
         // Search view
         nav_home = findViewById(R.id.nav_home);
@@ -143,7 +155,9 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (newText.isEmpty()) {
-                    loadEvents();
+                    showAllEvents();
+                } else {
+                    filterEvents(newText);
                 }
                 return true;
             }
@@ -152,6 +166,38 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         // Loading indicator and empty view
         loadingIndicator = findViewById(R.id.loadingIndicator);
         emptyView = findViewById(R.id.emptyView);
+
+        // RecyclerView
+        eventsRecyclerView = findViewById(R.id.eventsRecyclerView);
+    }
+
+    private void setupRecyclerView() {
+        eventCardsAdapter = new EventCardsAdapter(this);
+        eventsRecyclerView.setAdapter(eventCardsAdapter);
+
+        // Configuration du LinearLayoutManager horizontal
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        eventsRecyclerView.setLayoutManager(layoutManager);
+
+        // Optionnel : ajouter un décorateur pour l'espacement
+        // eventsRecyclerView.addItemDecoration(new HorizontalSpaceItemDecoration(16));
+    }
+
+    @Override
+    public void onEventCardClick(Event event) {
+        if (myMap != null && event.hasValidLocation()) {
+            // Animer la caméra vers l'événement sélectionné
+            LatLng eventLocation = event.getLatLng();
+            myMap.animateCamera(CameraUpdateFactory.newLatLngZoom(eventLocation, 16));
+
+            // Trouver et afficher la fenêtre d'information du marqueur correspondant
+            Marker marker = eventMarkerMap.get(event);
+            if (marker != null) {
+                marker.showInfoWindow();
+            }
+
+            Log.d(TAG, "Navigation vers l'événement: " + event.getTitre());
+        }
     }
 
     private void loadEvents() {
@@ -165,29 +211,24 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
                 Log.d(TAG, "Réponse API reçue, code: " + response.code());
                 showLoading(false);
 
-                // Gérer des réponses différentes en fonction du code HTTP
                 if (response.isSuccessful()) {
                     if (response.body() != null) {
                         Log.d(TAG, "Corps de réponse: " + response.body());
-                        // Vérifier si la structure de la réponse est correcte
                         if (response.body().getData() != null) {
                             eventList.clear();
                             eventList.addAll(response.body().getData());
                             Log.d(TAG, "Événements chargés: " + eventList.size());
 
-                            if (myMap != null) {
-                                addEventsToMap();
-                            }
+                            showAllEvents();
                         } else {
                             Log.e(TAG, "Les données sont null dans la réponse");
-                            loadMockEvents(); // Charger des données fictives comme fallback
+                            loadMockEvents();
                         }
                     } else {
                         Log.e(TAG, "Le corps de la réponse est null");
-                        loadMockEvents(); // Charger des données fictives comme fallback
+                        loadMockEvents();
                     }
                 } else {
-                    // Gérer les codes d'erreur HTTP
                     String errorMsg = "Erreur serveur: " + response.code();
                     if (response.errorBody() != null) {
                         try {
@@ -198,7 +239,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
                         }
                     }
                     Toast.makeText(EventMapActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
-                    loadMockEvents(); // Charger des données fictives comme fallback
+                    loadMockEvents();
                 }
 
                 updateEmptyState();
@@ -211,14 +252,12 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
                 Toast.makeText(EventMapActivity.this,
                         "Erreur de connexion: " + t.getMessage(), Toast.LENGTH_LONG).show();
 
-                // Charger des données fictives en cas d'erreur
                 loadMockEvents();
                 updateEmptyState();
             }
         });
     }
 
-    // Méthode pour charger des données fictives en cas d'erreur de connexion
     private void loadMockEvents() {
         eventList.clear();
 
@@ -253,9 +292,18 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         eventList.add(event2);
         eventList.add(event3);
 
+        showAllEvents();
+    }
+
+    private void showAllEvents() {
+        filteredEventList.clear();
+        filteredEventList.addAll(eventList);
+
         if (myMap != null) {
-            addEventsToMap();
+            addEventsToMap(filteredEventList);
         }
+
+        eventCardsAdapter.updateEvents(filteredEventList);
     }
 
     private void showLoading(boolean isLoading) {
@@ -263,26 +311,24 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
     }
 
     private void updateEmptyState() {
-        emptyView.setVisibility(eventList.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(filteredEventList.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void filterEvents(String query) {
-        List<Event> filteredList = new ArrayList<>();
+        filteredEventList.clear();
         for (Event event : eventList) {
-            if (event.getTitre().toLowerCase().contains(query.toLowerCase())) {
-                filteredList.add(event);
+            if (event.getTitre().toLowerCase().contains(query.toLowerCase()) ||
+                    event.getLieu().toLowerCase().contains(query.toLowerCase())) {
+                filteredEventList.add(event);
             }
         }
 
         if (myMap != null) {
-            addEventsToMap(filteredList);
+            addEventsToMap(filteredEventList);
         }
 
+        eventCardsAdapter.updateEvents(filteredEventList);
         updateEmptyState();
-    }
-
-    private void addEventsToMap() {
-        addEventsToMap(eventList);
     }
 
     private void addEventsToMap(List<Event> events) {
@@ -290,6 +336,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
 
         myMap.clear();
         markerEventMap.clear();
+        eventMarkerMap.clear();
 
         for (Event event : events) {
             if (event.hasValidLocation()) {
@@ -302,16 +349,31 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
 
                 if (marker != null) {
                     markerEventMap.put(marker, event);
+                    eventMarkerMap.put(event, marker);
                 }
             }
         }
 
+        // Configuration du clic sur les marqueurs
+        myMap.setOnMarkerClickListener(marker -> {
+            marker.showInfoWindow();
+            return false;
+        });
+
+        // Configuration du clic sur la fenêtre d'information
         myMap.setOnInfoWindowClickListener(marker -> {
             Event event = markerEventMap.get(marker);
             if (event != null) {
+                Intent intent = new Intent(EventMapActivity.this, EventDetailActivity.class);
+                intent.putExtra("event", event);
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+                Log.d(TAG, "Navigation vers les détails de l'événement: " + event.getTitre());
+            } else {
+                Log.e(TAG, "Événement non trouvé pour ce marqueur");
                 Toast.makeText(EventMapActivity.this,
-                        "Event: " + event.getTitre(), Toast.LENGTH_SHORT).show();
-                // Vous pouvez ajouter ici la logique pour ouvrir les détails de l'événement
+                        "Erreur: Impossible de charger les détails de l'événement",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -361,8 +423,8 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
             myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10));
         }
 
-        if (!eventList.isEmpty()) {
-            addEventsToMap();
+        if (!filteredEventList.isEmpty()) {
+            addEventsToMap(filteredEventList);
         }
     }
 

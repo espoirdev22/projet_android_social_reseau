@@ -150,7 +150,7 @@
                 android:inputType="textMultiLine"
                 android:padding="12dp" />
 
-            <!-- Champ de date -->
+            <!-- SECTION DATE ET HEURE CORRIGÉE -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -159,42 +159,193 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
+            <!-- Options de sélection de date avec état sélectionné -->
             <LinearLayout
-                android:id="@+id/datePickerLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/edit_text_background"
-                android:orientation="horizontal"
-                android:padding="12dp"
-                android:clickable="true"
-                android:focusable="true">
+                android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_calendar"
-                    app:tint="#777777" />
-
-                <TextView
-                    android:id="@+id/dateTimeTextView"
+                <ToggleButton
+                    android:id="@+id/datePickerModeButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:hint="Sélectionner la date et l'heure"
-                    android:textColor="#000000" />
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/toggle_button_selector"
+                    android:padding="12dp"
+                    android:text="📅 Sélecteur"
+                    android:textOff="📅 Sélecteur"
+                    android:textOn="📅 Sélecteur"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:checked="true" />
 
-                <!-- Hidden button for compatibility -->
-                <Button
-                    android:id="@+id/dateTimeButton"
+                <ToggleButton
+                    android:id="@+id/manualInputModeButton"
                     android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:visibility="gone" />
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                   android:background="@drawable/toggle_button_selector"
+                    android:padding="12dp"
+                    android:text="✏️ Manuelle"
+                    android:textOff="✏️ Manuelle"
+                    android:textOn="✏️ Manuelle"
+                    android:textColor="#777777"
+                    android:textSize="14sp"
+                    android:checked="false" />
             </LinearLayout>
+
+            <!-- Conteneur pour les deux modes de saisie -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp">
+
+                <!-- Mode sélecteur de date/heure (visible par défaut) -->
+                <LinearLayout
+                    android:id="@+id/datePickerLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/edit_text_background"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:visibility="visible">
+
+                    <!-- Sélection de la date -->
+                    <LinearLayout
+                        android:id="@+id/datePickerSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="#777777" />
+
+                        <TextView
+                            android:id="@+id/selectedDateTextView"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="Sélectionner la date"
+                            android:textColor="#777777"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <!-- Ligne de séparation -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="8dp"
+                        android:background="#E0E0E0" />
+
+                    <!-- Sélection de l'heure -->
+                    <LinearLayout
+                        android:id="@+id/timePickerSection"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_time"
+                            app:tint="#777777" />
+
+                        <TextView
+                            android:id="@+id/selectedTimeTextView"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="Sélectionner l'heure"
+                            android:textColor="#777777"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+
+                    <!-- Aperçu de la date complète -->
+                    <TextView
+                        android:id="@+id/fullDateTimePreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:padding="8dp"
+                        android:background="#F0F8FF"
+                        android:text="Date et heure : Non définies"
+                        android:textColor="#2196F3"
+                        android:textSize="14sp"
+                        android:textStyle="italic"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- Mode saisie manuelle (masqué par défaut) -->
+                <LinearLayout
+                    android:id="@+id/manualDateInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:id="@+id/manualDateEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/edit_text_background"
+                        android:hint="JJ/MM/AAAA HH:MM (ex: 25/12/2024 15:30)"
+                        android:inputType="text"
+                        android:padding="12dp"
+                        android:maxLength="16" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Format obligatoire: JJ/MM/AAAA HH:MM"
+                        android:textColor="#FF9800"
+                        android:textSize="12sp"
+                        android:textStyle="italic" />
+
+                    <!-- Validation de la saisie manuelle -->
+                    <TextView
+                        android:id="@+id/manualDateValidationText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textSize="12sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Boutons cachés pour la compatibilité -->
+            <Button
+                android:id="@+id/dateTimeButton"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/dateTimeTextView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
 
             <!-- Section de localisation améliorée -->
             <TextView
@@ -234,18 +385,6 @@
                     android:text="Rechercher"
                     android:textColor="#FFFFFF"
                     android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- Boutons de géolocalisation -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-
-
-
-
             </LinearLayout>
 
             <!-- Affichage de l'adresse sélectionnée -->
@@ -308,7 +447,6 @@
                     android:textColor="#777777"
                     android:textSize="12sp" />
             </LinearLayout>
-
 
             <!-- Champs cachés pour latitude et longitude (pour la compatibilité) -->
             <EditText

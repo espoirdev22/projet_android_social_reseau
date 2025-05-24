@@ -1,181 +1,112 @@
 package com.example.androidproject.model;
 
-import android.net.Uri;
-
 import com.google.android.gms.maps.model.LatLng;
-import com.google.gson.annotations.SerializedName;
-
 import java.io.Serializable;
 
 public class Event implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String titre;
     private String description;
     private String date;
+    private String time; // ou getT() selon votre implémentation
     private String lieu;
-    private String image;
+    private String location; // pour la localisation textuelle
     private double latitude;
     private double longitude;
-
-    private String time; // Ajouté pour correspondre à getT()
-    private String eventType; // Ajouté
-    private String price; // Ajouté
-    private String organizerName; // Ajouté
-    @SerializedName("created_at")
+    private String eventType;
+    private String price;
+    private String organizerName;
+    private String image;
     private String createdAt;
+
+    // Constructeurs
     public Event() {}
 
-
-
     public Event(String id, String titre, String description, String date,
-                 String lieu, String image, double latitude, double longitude) {
+                 String lieu, double latitude, double longitude) {
         this.id = id;
         this.titre = titre;
         this.description = description;
         this.date = date;
         this.lieu = lieu;
-        this.image = image;
         this.latitude = latitude;
         this.longitude = longitude;
     }
-    // Getters and setters
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    // Getters et Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public String getTitre() {
-        return titre;
-    }
+    public String getTitre() { return titre; }
+    public void setTitre(String titre) { this.titre = titre; }
 
-    public void setTitre(String titre) {
-        this.titre = titre;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
 
-    public String getDate() {
-        return date;
-    }
+    // Alias pour getT() si vous l'utilisez dans votre code existant
+    public String getT() { return time; }
+    public void setT(String time) { this.time = time; }
 
-    public void setDate(String date) {
-        this.date = date;
-    }
+    public String getLieu() { return lieu; }
+    public void setLieu(String lieu) { this.lieu = lieu; }
 
-    public String getLieu() {
-        return lieu;
-    }
+    public String getLocation() { return location != null ? location : lieu; }
+    public void setLocation(String location) { this.location = location; }
 
-    public void setLieu(String lieu) {
-        this.lieu = lieu;
-    }
+    public double getLatitude() { return latitude; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
 
-    public String getImage() {
-        return image;
-    }
+    public double getLongitude() { return longitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
 
-    public void setImage(String image) {
-        this.image = image;
-    }
+    public String getEventType() { return eventType != null ? eventType : "Événement"; }
+    public void setEventType(String eventType) { this.eventType = eventType; }
 
-    public double getLatitude() {
-        return latitude;
-    }
+    public String getPrice() { return price; }
+    public void setPrice(String price) { this.price = price; }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
+    public String getOrganizerName() { return organizerName; }
+    public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
 
-    public double getLongitude() {
-        return longitude;
-    }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
-    // Méthode utilitaire pour vérifier si l'événement a une position valide
+    // Méthodes utilitaires
     public boolean hasValidLocation() {
-        return latitude != 0 && longitude != 0;
+        return latitude != 0.0 && longitude != 0.0;
     }
 
-    // Méthode pour obtenir l'objet LatLng pour Google Maps
     public LatLng getLatLng() {
         return new LatLng(latitude, longitude);
     }
 
-    public void setLocation(String location) {
-    }
-
-    private String userId;
-    private Uri imageUri;
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setImageUri(String uri) {
-        this.imageUri = Uri.parse(uri);
-    }
-
-    public Uri getImageUri() {
-        return imageUri;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getT() {
-        return time;
-    }
-
-    public void setT(String time) {
-        this.time = time;
-    }
-
-    public String getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
     public String getFormattedPrice() {
-        return price != null ? price : "Gratuit";
+        if (price == null || price.isEmpty()) {
+            return "Gratuit";
+        }
+        return price;
     }
 
-    public void setPrice(String price) {
-        this.price = price;
+    @Override
+    public String toString() {
+        return "Event{" +
+                "id='" + id + '\'' +
+                ", titre='" + titre + '\'' +
+                ", date='" + date + '\'' +
+                ", lieu='" + lieu + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                '}';
     }
-
-    public String getOrganizerName() {
-        return organizerName != null ? organizerName : "Organisateur";
-    }
-
-    public void setOrganizerName(String organizerName) {
-        this.organizerName = organizerName;
-    }
-
-    public String getImageUrl() {
-        return image;
-    }
-
-
-
-    public String getLocation() {
-        return lieu;
-    }
-
 }

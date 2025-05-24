@@ -37,6 +37,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -65,6 +66,13 @@ public class AddEventActivity extends AppCompatActivity {
     private Button dateTimeButton;
     private Button saveEventButton;
 
+    // Nouveaux composants pour la saisie de date
+    private Button datePickerModeButton;
+    private Button manualInputModeButton;
+    private LinearLayout manualDateInputLayout;
+    private LinearLayout datePickerLayout;
+    private EditText manualDateEditText;
+
     // Composants pour la localisation
     private EditText locationSearchEditText;
     private LinearLayout selectedLocationLayout;
@@ -80,6 +88,7 @@ public class AddEventActivity extends AppCompatActivity {
     // Composants pour l'image
     private ImageView eventImageView;
     private View selectImageButton;
+    private LinearLayout imagePickerLayout;
 
     // ======================== VARIABLES DE LOCALISATION ========================
     private double selectedLatitude = 0.0;
@@ -92,6 +101,8 @@ public class AddEventActivity extends AppCompatActivity {
     private Calendar selectedDateTime;
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat apiDateFormat; // Format pour l'API
+    private SimpleDateFormat manualInputFormat; // Format pour la saisie manuelle
+    private boolean isManualInputMode = false;
 
     // ======================== VARIABLES IMAGE ========================
     private Uri selectedImageUri;
@@ -133,6 +144,13 @@ public class AddEventActivity extends AppCompatActivity {
         dateTimeButton = findViewById(R.id.dateTimeButton);
         saveEventButton = findViewById(R.id.saveEventButton);
 
+        // Nouveaux composants pour la saisie de date
+        datePickerModeButton = findViewById(R.id.datePickerModeButton);
+        manualInputModeButton = findViewById(R.id.manualInputModeButton);
+        manualDateInputLayout = findViewById(R.id.manualDateInputLayout);
+        datePickerLayout = findViewById(R.id.datePickerLayout);
+        manualDateEditText = findViewById(R.id.manualDateEditText);
+
         // Localisation
         locationSearchEditText = findViewById(R.id.locationSearchEditText);
         selectedLocationLayout = findViewById(R.id.selectedLocationLayout);
@@ -148,6 +166,7 @@ public class AddEventActivity extends AppCompatActivity {
         // Image components
         eventImageView = findViewById(R.id.eventImageView);
         selectImageButton = findViewById(R.id.selectImageButton);
+        imagePickerLayout = findViewById(R.id.imagePickerLayout);
 
         // Cacher les composants de localisation au début
         selectedLocationLayout.setVisibility(View.GONE);
@@ -157,6 +176,31 @@ public class AddEventActivity extends AppCompatActivity {
         dateTimeButton.setOnClickListener(v -> showDateTimePicker());
         saveEventButton.setOnClickListener(v -> saveEvent());
         clearLocationButton.setOnClickListener(v -> clearLocation());
+
+        // Listeners pour les modes de saisie de date
+        datePickerModeButton.setOnClickListener(v -> switchToDatePickerMode());
+        manualInputModeButton.setOnClickListener(v -> switchToManualInputMode());
+
+        // Listener pour le clic sur le layout du sélecteur de date
+        datePickerLayout.setOnClickListener(v -> {
+            if (!isManualInputMode) {
+                showDateTimePicker();
+            }
+        });
+
+        // Listener pour la saisie manuelle de date
+        manualDateEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                validateAndParseManualDate(s.toString());
+            }
+        });
 
         // Listener pour la recherche d'adresse
         locationSearchEditText.addTextChangedListener(new TextWatcher() {
@@ -174,8 +218,65 @@ public class AddEventActivity extends AppCompatActivity {
             }
         });
 
-        // Listener pour la sélection d'image
+        // Listener pour la sélection d'image via le layout cliquable
+        imagePickerLayout.setOnClickListener(v -> selectImage());
         selectImageButton.setOnClickListener(v -> selectImage());
+    }
+
+    private void switchToDatePickerMode() {
+        isManualInputMode = false;
+
+        // Mettre à jour l'apparence des boutons
+        datePickerModeButton.setBackgroundResource(R.drawable.secondary_button_background);
+        datePickerModeButton.setTextColor(getResources().getColor(android.R.color.white));
+        manualInputModeButton.setBackgroundResource(R.drawable.edit_text_background);
+        //manualInputModeButton.setTextColor(getResources().getColor(R.color.text_gray));
+
+        // Afficher/masquer les layouts appropriés
+        datePickerLayout.setVisibility(View.VISIBLE);
+        manualDateInputLayout.setVisibility(View.GONE);
+
+        Toast.makeText(this, "Mode sélecteur de date activé", Toast.LENGTH_SHORT).show();
+    }
+
+    private void switchToManualInputMode() {
+        isManualInputMode = true;
+
+        // Mettre à jour l'apparence des boutons
+        manualInputModeButton.setBackgroundResource(R.drawable.secondary_button_background);
+        manualInputModeButton.setTextColor(getResources().getColor(android.R.color.white));
+        datePickerModeButton.setBackgroundResource(R.drawable.edit_text_background);
+        //datePickerModeButton.setTextColor(getResources().getColor(R.color.text_gray));
+
+        // Afficher/masquer les layouts appropriés
+        datePickerLayout.setVisibility(View.GONE);
+        manualDateInputLayout.setVisibility(View.VISIBLE);
+
+        // Pré-remplir avec la date actuelle si elle existe
+        if (selectedDateTime != null) {
+            manualDateEditText.setText(manualInputFormat.format(selectedDateTime.getTime()));
+        }
+
+        Toast.makeText(this, "Mode saisie manuelle activé", Toast.LENGTH_SHORT).show();
+    }
+
+    private void validateAndParseManualDate(String dateString) {
+        if (dateString.length() >= 16) { // Format complet: JJ/MM/AAAA HH:MM
+            try {
+                Calendar parsedDate = Calendar.getInstance();
+                parsedDate.setTime(manualInputFormat.parse(dateString));
+                selectedDateTime = parsedDate;
+
+                // Mettre à jour l'affichage dans le sélecteur aussi
+                updateDateTimeDisplay();
+
+                // Retirer l'erreur s'il y en avait une
+                manualDateEditText.setError(null);
+
+            } catch (ParseException e) {
+                manualDateEditText.setError("Format invalide (JJ/MM/AAAA HH:MM)");
+            }
+        }
     }
 
     private void initializeDateTime() {
@@ -184,6 +285,9 @@ public class AddEventActivity extends AppCompatActivity {
         dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         // Format pour l'API (format ISO)
         apiDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        // Format pour la saisie manuelle
+        manualInputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+
         updateDateTimeDisplay();
     }
 
@@ -198,6 +302,10 @@ public class AddEventActivity extends AppCompatActivity {
     }
 
     private void showDateTimePicker() {
+        if (isManualInputMode) {
+            return; // Ne pas ouvrir le sélecteur en mode manuel
+        }
+
         Calendar calendar = selectedDateTime;
 
         new android.app.DatePickerDialog(this,
@@ -212,6 +320,11 @@ public class AddEventActivity extends AppCompatActivity {
                                 calendar.set(Calendar.MINUTE, minute);
                                 selectedDateTime = calendar;
                                 updateDateTimeDisplay();
+
+                                // Mettre à jour aussi le champ manuel si il est visible
+                                if (isManualInputMode) {
+                                    manualDateEditText.setText(manualInputFormat.format(selectedDateTime.getTime()));
+                                }
                             },
                             calendar.get(Calendar.HOUR_OF_DAY),
                             calendar.get(Calendar.MINUTE),
@@ -312,6 +425,10 @@ public class AddEventActivity extends AppCompatActivity {
             selectedImageUri = data.getData();
             eventImageView.setImageURI(selectedImageUri);
             eventImageView.setVisibility(View.VISIBLE);
+
+            // Cacher les éléments de placeholder
+            findViewById(R.id.cameraIcon).setVisibility(View.GONE);
+            findViewById(R.id.uploadImageText).setVisibility(View.GONE);
         }
     }
 
@@ -335,6 +452,16 @@ public class AddEventActivity extends AppCompatActivity {
         if (dateTime.isEmpty()) {
             Toast.makeText(this, "Veuillez sélectionner une date et une heure", Toast.LENGTH_SHORT).show();
             return;
+        }
+
+        // Validation supplémentaire pour la saisie manuelle
+        if (isManualInputMode) {
+            String manualDate = manualDateEditText.getText().toString().trim();
+            if (manualDate.length() < 16) {
+                manualDateEditText.setError("Veuillez entrer une date complète (JJ/MM/AAAA HH:MM)");
+                manualDateEditText.requestFocus();
+                return;
+            }
         }
 
         // Vérifier si l'utilisateur est connecté

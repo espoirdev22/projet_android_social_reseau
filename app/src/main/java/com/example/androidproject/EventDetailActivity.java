@@ -1,17 +1,16 @@
 package com.example.androidproject;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.androidproject.model.Event;
 
 public class EventDetailActivity extends AppCompatActivity {
@@ -28,7 +27,9 @@ public class EventDetailActivity extends AppCompatActivity {
     private TextView eventRating;
     private TextView organizerName;
     private TextView eventPrice;
-    private Button btnJoinRegister;
+    private TextView eventDescription;
+    private ImageView btnAddToCalendar;
+    private ImageView btnShowLocation;
     private Event currentEvent;
 
     @Override
@@ -39,6 +40,8 @@ public class EventDetailActivity extends AppCompatActivity {
         initViews();
         setupClickListeners();
         loadEventData();
+
+        getSupportActionBar().hide();
     }
 
     private void initViews() {
@@ -54,17 +57,28 @@ public class EventDetailActivity extends AppCompatActivity {
         eventRating = findViewById(R.id.eventRating);
         organizerName = findViewById(R.id.organizerName);
         eventPrice = findViewById(R.id.eventPrice);
-        btnJoinRegister = findViewById(R.id.btnJoinRegister);
+        eventDescription = findViewById(R.id.eventDescription);
+        btnAddToCalendar = findViewById(R.id.btnAddToCalendar);
+        btnShowLocation = findViewById(R.id.btnShowLocation);
     }
 
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
 
         btnShare.setOnClickListener(v -> {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Découvrez cet événement : " + currentEvent.getTitre());
-            startActivity(Intent.createChooser(shareIntent, "Partager"));
+            if (currentEvent != null) {
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                String shareText = "Découvrez cet événement : " + currentEvent.getTitre();
+                if (currentEvent.getDate() != null) {
+                    shareText += "\nDate : " + currentEvent.getDate();
+                }
+                if (currentEvent.getLocation() != null) {
+                    shareText += "\nLieu : " + currentEvent.getLocation();
+                }
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+                startActivity(Intent.createChooser(shareIntent, "Partager"));
+            }
         });
 
         btnBookmark.setOnClickListener(v -> {
@@ -72,8 +86,19 @@ public class EventDetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Événement ajouté aux favoris", Toast.LENGTH_SHORT).show();
         });
 
-        btnJoinRegister.setOnClickListener(v -> {
-            Toast.makeText(this, "Inscription réussie !", Toast.LENGTH_SHORT).show();
+        btnAddToCalendar.setOnClickListener(v -> {
+            Toast.makeText(this, "Ajout au calendrier", Toast.LENGTH_SHORT).show();
+            // Implémenter l'ajout au calendrier
+        });
+
+        btnShowLocation.setOnClickListener(v -> {
+            if (currentEvent != null && currentEvent.getLocation() != null) {
+                Toast.makeText(this, "Affichage de la localisation: " +
+                        currentEvent.getLocation(), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Lien de l'événement sera disponible pour les participants",
+                        Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -119,10 +144,15 @@ public class EventDetailActivity extends AppCompatActivity {
         organizerName.setText(currentEvent.getOrganizerName() != null ?
                 currentEvent.getOrganizerName() : "Organisateur");
 
-        // Charger l'image si disponible
-        if (currentEvent.getImageUrl() != null && !currentEvent.getImageUrl().isEmpty()) {
+        // Description
+        if (currentEvent.getDescription() != null) {
+            eventDescription.setText(currentEvent.getDescription());
+        }
+
+        // Charger l'image
+        if (currentEvent.getImage() != null && !currentEvent.getImage().isEmpty()) {
             // Ici vous pourriez utiliser Glide ou Picasso pour charger l'image
-            // Glide.with(this).load(currentEvent.getImageUrl()).into(eventBanner);
+             Glide.with(this).load(currentEvent.getImage()).into(eventBanner);
         }
     }
 
@@ -135,17 +165,22 @@ public class EventDetailActivity extends AppCompatActivity {
         eventRating.setText("4.2 ⭐⭐⭐⭐⭐");
         organizerName.setText("Unilorin R Users Group");
         eventPrice.setText("Gratuit");
+        eventDescription.setText("Cette session pratique vous permettra d'apprendre à nettoyer des données efficacement en utilisant R et les expressions régulières. Parfait pour les débutants et intermédiaires qui souhaitent améliorer leurs compétences en préparation de données.");
     }
 
     private String formatDate(String date) {
-        if (date == null) return "";
-        // Formatage de la date selon vos besoins
+        if (date == null || date.isEmpty()) {
+            return "Date à définir";
+        }
+        // Vous pouvez ajouter ici une logique de formatage plus sophistiquée
         return date;
     }
 
     private String formatTime(String time) {
-        if (time == null) return "";
-        // Formatage de l'heure selon vos besoins
+        if (time == null || time.isEmpty()) {
+            return "Heure à définir";
+        }
+        // Vous pouvez ajouter ici une logique de formatage plus sophistiquée
         return time;
     }
 }
