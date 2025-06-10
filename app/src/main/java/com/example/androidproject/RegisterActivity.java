@@ -117,7 +117,6 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void initializeFields() {
-        nameEditText = findViewById(R.id.lastNameEditText);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText);

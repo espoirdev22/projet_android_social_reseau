@@ -9,13 +9,17 @@ import com.example.androidproject.model.User;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -26,6 +30,12 @@ public interface ApiService {
     Call<ApiResponse<User>> loginUser(@Body LoginRequest loginRequest);
     @POST("api/auth/register")
     Call<ApiResponse<User>> registerUser(@Body RegisterRequest registerRequest);
+
+    // NOUVEAU: Google Login
+    //@POST("api/auth/google")
+    //Call<ApiResponse<User>> googleLogin(@Body GoogleLoginRequest googleLoginRequest);
+    //Call<ApiResponse<User>> googleLogin(@Body GoogleLoginRequest googleLoginRequest);
+
     @GET("api/myEvents")
     Call<ApiResponse<List<Event>>> getUserEvents(@Header("Authorization") String token);
 
@@ -39,11 +49,20 @@ public interface ApiService {
     @GET("api/events")
     Call<ApiResponse<List<Event>>> getAllEvents();
 
-    // Endpoint alternatif au cas où le chemin serait différent
-
-
+    //  Supprimer un événement
+    @DELETE("api/events/{id}")
+    Call<ApiResponse<Void>> deleteEvent(@Header("Authorization") String authorization, @Path("id") Long eventId);
     @GET("api/events/search")
     Call<ApiResponse<List<Event>>> searchEvents(@Query("query") String query);
+
+    // Nouvel endpoint pour uploader une image
+    @Multipart
+    @POST("events")
+    Call<ApiResponse<Event>> createEventWithImage(
+            @Header("Authorization") String token,
+            @Part("event") Event event,
+            @Part MultipartBody.Part image
+    );
 
 
     // Notifications

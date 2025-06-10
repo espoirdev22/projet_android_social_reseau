@@ -23,6 +23,11 @@ import com.example.androidproject.model.Event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -32,7 +37,9 @@ public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
     private TextView titleView;
-    private TextView profileInitial; // Ajout du TextView pour l'initiale
+    private TextView profileInitial;
+    private TextView eventCountText; // Compteur total d'événements
+    private TextView monthEventCountText; // Compteur d'événements ce mois
     private View nav_home;
     private View nav_explore;
     private View nav_notifications;
@@ -47,6 +54,11 @@ public class HomeActivity extends AppCompatActivity {
     private static final String TOKEN_KEY = "auth_token";
     private static final String USER_ID_KEY = "user_id";
     private static final String USER_EMAIL_KEY = "user_email";
+
+    // Formats de date pour parser les événements
+    private SimpleDateFormat inputDateFormat1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    private SimpleDateFormat inputDateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
+    private SimpleDateFormat inputDateFormat3 = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +78,10 @@ public class HomeActivity extends AppCompatActivity {
         setupRecyclerView();
         setupNavigation();
         setupAddEventButton();
-        displayUserInitial(); // Ajout de l'appel à la méthode pour afficher l'initiale
+        displayUserInitial();
         setupBottomNavigation();
         checkAuthenticationAndLoadEvents();
     }
-
 
     private void initializeSharedPreferences() {
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -82,28 +93,53 @@ public class HomeActivity extends AppCompatActivity {
         nav_notifications = findViewById(R.id.nav_notifications);
         fabAddEvent = findViewById(R.id.fabAddEvent);
         upcomingEventsRecyclerView = findViewById(R.id.upcomingEventsRecyclerView);
-        profileInitial = findViewById(R.id.profileInitial); // Récupération du TextView pour l'initiale
+        profileInitial = findViewById(R.id.profileInitial);
+
+        // Initialisation des compteurs
+        initializeCounters();
 
         // Ajout d'un listener de clic sur le profil
         profileInitial.setOnClickListener(v -> showLogoutDialog());
     }
 
-    // Nouvelle méthode pour afficher l'initiale de l'utilisateur
+    private void initializeCounters() {
+        // Vous devez ajouter des IDs aux TextViews des compteurs dans votre XML
+        // Pour le moment, je vais chercher par la hiérarchie des vues
+        try {
+            // Trouver les TextViews des compteurs dans les CardViews de statistiques
+            LinearLayout statsLayout = findViewById(R.id.statsLayout); // Vous devrez ajouter cet ID au LinearLayout des stats
+            if (statsLayout != null) {
+                // Premier CardView - Compteur total d'événements
+                View firstCard = statsLayout.getChildAt(0);
+                if (firstCard != null) {
+                    eventCountText = firstCard.findViewById(R.id.eventCountText); // Vous devrez ajouter cet ID
+                }
+
+                // Deuxième CardView - Compteur événements ce mois
+                View secondCard = statsLayout.getChildAt(1);
+                if (secondCard != null) {
+                    monthEventCountText = secondCard.findViewById(R.id.monthEventCountText); // Vous devrez ajouter cet ID
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing counters: " + e.getMessage());
+            // Fallback - chercher directement par ID si vous les ajoutez
+            eventCountText = findViewById(R.id.eventCountText);
+            monthEventCountText = findViewById(R.id.monthEventCountText);
+        }
+    }
+
     private void displayUserInitial() {
         String email = getUserEmail();
         if (email != null && !email.isEmpty()) {
-            // Prendre la première lettre en majuscule
             String initial = String.valueOf(email.charAt(0)).toUpperCase();
             profileInitial.setText(initial);
         } else {
-            // Afficher un placeholder si aucun email n'est disponible
             profileInitial.setText("?");
         }
     }
 
-
     private void setupBottomNavigation() {
-        // Récupération correcte des vues de navigation
         View bottomNavContainer = findViewById(R.id.bottomNavContainer);
         if (bottomNavContainer != null) {
             LinearLayout homeNav = bottomNavContainer.findViewById(R.id.nav_home);
@@ -118,8 +154,10 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
+
     private void setupRecyclerView() {
         eventAdapter = new EventAdapter(userEvents);
+        eventAdapter.setAuthToken(getAuthToken());
         upcomingEventsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         upcomingEventsRecyclerView.setAdapter(eventAdapter);
     }
@@ -175,7 +213,11 @@ public class HomeActivity extends AppCompatActivity {
                     if (apiResponse.isSuccess() && apiResponse.getData() != null) {
                         userEvents.clear();
                         userEvents.addAll(apiResponse.getData());
+                        eventAdapter.setAuthToken(getAuthToken());
                         eventAdapter.notifyDataSetChanged();
+
+                        // Mettre à jour les compteurs
+                        updateEventCounters();
 
                         if (userEvents.isEmpty()) {
                             Toast.makeText(HomeActivity.this, "Aucun événement trouvé", Toast.LENGTH_SHORT).show();
@@ -183,6 +225,7 @@ public class HomeActivity extends AppCompatActivity {
                     } else {
                         String message = apiResponse.getMessage() != null ? apiResponse.getMessage() : "Erreur lors du chargement";
                         Toast.makeText(HomeActivity.this, message, Toast.LENGTH_SHORT).show();
+                        updateEventCounters(); // Mettre à jour avec 0 événements
                     }
                 } else {
                     if (response.code() == 401) {
@@ -191,19 +234,100 @@ public class HomeActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(HomeActivity.this, "Erreur lors du chargement des événements", Toast.LENGTH_SHORT).show();
                     }
+                    updateEventCounters(); // Mettre à jour avec 0 événements
                 }
             }
 
             @Override
             public void onFailure(Call<ApiResponse<List<Event>>> call, Throwable t) {
                 Toast.makeText(HomeActivity.this, "Erreur de connexion", Toast.LENGTH_SHORT).show();
+                updateEventCounters(); // Mettre à jour avec 0 événements
             }
         });
     }
 
+    /**
+     * Met à jour les compteurs d'événements
+     */
+    private void updateEventCounters() {
+        int totalEvents = userEvents.size();
+        int eventsThisMonth = countEventsThisMonth();
+
+        Log.d(TAG, "Updating counters - Total: " + totalEvents + ", This month: " + eventsThisMonth);
+
+        // Mettre à jour le compteur total
+        if (eventCountText != null) {
+            eventCountText.setText(String.valueOf(totalEvents));
+        } else {
+            Log.w(TAG, "eventCountText is null, cannot update total count");
+        }
+
+        // Mettre à jour le compteur du mois
+        if (monthEventCountText != null) {
+            monthEventCountText.setText(String.valueOf(eventsThisMonth));
+        } else {
+            Log.w(TAG, "monthEventCountText is null, cannot update month count");
+        }
+    }
+
+    /**
+     * Compte le nombre d'événements de ce mois
+     */
+    private int countEventsThisMonth() {
+        Calendar currentMonth = Calendar.getInstance();
+        int currentYear = currentMonth.get(Calendar.YEAR);
+        int currentMonthValue = currentMonth.get(Calendar.MONTH);
+
+        int count = 0;
+        for (Event event : userEvents) {
+            Date eventDate = parseEventDate(event.getDate());
+            if (eventDate != null) {
+                Calendar eventCalendar = Calendar.getInstance();
+                eventCalendar.setTime(eventDate);
+
+                if (eventCalendar.get(Calendar.YEAR) == currentYear &&
+                        eventCalendar.get(Calendar.MONTH) == currentMonthValue) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Parse la date de l'événement en essayant différents formats
+     */
+    private Date parseEventDate(String dateString) {
+        if (dateString == null || dateString.isEmpty()) {
+            return null;
+        }
+
+        // Format 1: yyyy-MM-dd HH:mm:ss
+        try {
+            return inputDateFormat1.parse(dateString);
+        } catch (ParseException e1) {
+            // Continue avec le format suivant
+        }
+
+        // Format 2: yyyy-MM-dd'T'HH:mm:ss
+        try {
+            return inputDateFormat2.parse(dateString);
+        } catch (ParseException e2) {
+            // Continue avec le format suivant
+        }
+
+        // Format 3: yyyy-MM-dd
+        try {
+            return inputDateFormat3.parse(dateString);
+        } catch (ParseException e3) {
+            Log.w(TAG, "Failed to parse date: " + dateString);
+            return null;
+        }
+    }
+
     private void redirectToLogin() {
         logout();
-        Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+        Intent intent = new Intent(HomeActivity.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
@@ -215,7 +339,7 @@ public class HomeActivity extends AppCompatActivity {
         String token = getAuthToken();
         if (token != null && !token.isEmpty()) {
             loadUserEvents();
-            displayUserInitial(); // Mise à jour de l'initiale à chaque reprise de l'activité
+            displayUserInitial();
         }
     }
 
@@ -250,13 +374,11 @@ public class HomeActivity extends AppCompatActivity {
         prefs.edit().clear().apply();
     }
 
-    // Méthode pour afficher la boîte de dialogue de déconnexion
     private void showLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Profil");
         builder.setMessage("Voulez-vous vous déconnecter ?");
         builder.setPositiveButton("Déconnexion", (dialog, which) -> {
-            // Déconnecter l'utilisateur
             logout();
             Toast.makeText(HomeActivity.this, "Déconnexion réussie", Toast.LENGTH_SHORT).show();
             redirectToLogin();
@@ -265,5 +387,13 @@ public class HomeActivity extends AppCompatActivity {
             dialog.dismiss();
         });
         builder.show();
+    }
+
+    /**
+     * Méthode publique pour permettre à l'EventAdapter de notifier
+     * la suppression d'un événement et mettre à jour les compteurs
+     */
+    public void onEventDeleted() {
+        updateEventCounters();
     }
 }

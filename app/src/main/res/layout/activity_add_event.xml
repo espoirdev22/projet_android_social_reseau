@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <ImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/backButton"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
@@ -60,53 +60,41 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Section d'image -->
+            <!-- Section URL d'image -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Image de l'événement"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/imageUrlEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/edit_text_background"
+                android:hint="Entrez l'URL de l'image (optionnel)"
+                android:inputType="textUri"
+                android:padding="12dp" />
+
+            <!-- Aperçu de l'image (optionnel) -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/imagePreviewCard"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"
                 android:layout_marginBottom="16dp"
+                android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp">
 
-                <LinearLayout
-                    android:id="@+id/imagePickerLayout"
+                <ImageView
+                    android:id="@+id/imagePreviewView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="#F5F5F5"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <ImageView
-                        android:id="@+id/eventImageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:visibility="gone" />
-
-                    <ImageView
-                        android:id="@+id/cameraIcon"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_camera"
-                        app:tint="#AAAAAA" />
-
-                    <TextView
-                        android:id="@+id/uploadImageText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Ajouter une image"
-                        android:textColor="#777777" />
-
-                    <!-- Hidden button for compatibility -->
-                    <Button
-                        android:id="@+id/selectImageButton"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:visibility="gone" />
-                </LinearLayout>
+                    android:scaleType="centerCrop" />
             </androidx.cardview.widget.CardView>
 
             <!-- Champ de titre -->
@@ -150,7 +138,7 @@
                 android:inputType="textMultiLine"
                 android:padding="12dp" />
 
-            <!-- SECTION DATE ET HEURE CORRIGÉE -->
+            <!-- SECTION DATE ET HEURE -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -187,7 +175,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                   android:background="@drawable/toggle_button_selector"
+                    android:background="@drawable/toggle_button_selector"
                     android:padding="12dp"
                     android:text="✏️ Manuelle"
                     android:textOff="✏️ Manuelle"

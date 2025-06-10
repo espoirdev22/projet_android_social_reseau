@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Image de fond avec cadrage optimal -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/img_1"
+        android:scaleType="centerCrop"
+        android:adjustViewBounds="false" />
+
+    <!-- Overlay semi-transparent -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000" />
+
+    <!-- Header avec logo -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_horizontal"
+        android:layout_alignParentTop="true"
+        android:background="#80000000">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="event"
+            android:textSize="32sp"
+            android:textColor="#FF4081"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:fontFamily="cursive" />
+
+    </LinearLayout>
+
+    <!-- Titre principal -->
+    <TextView
+        android:id="@+id/main_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginHorizontal="32dp"
+        android:text="Partagez vos passions"
+        android:textColor="@android:color/white"
+        android:textSize="40sp"
+        android:textAlignment="center"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="bold" />
+
+    <!-- Boutons en bas -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="100dp"
+        android:layout_marginHorizontal="32dp"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <!-- Bouton Inscription -->
+        <Button
+            android:id="@+id/btn_inscription"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Inscription"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textAllCaps="false"
+            android:fontFamily="sans-serif-medium"
+            android:backgroundTint="#FF4081"
+            android:layout_marginBottom="24dp"
+            android:elevation="4dp" />
+
+        <!-- Lien pour se connecter -->
+        <TextView
+            android:id="@+id/tv_login_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vous avez déjà un compte ?\nIdentifiez-vous"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textAlignment="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:padding="12dp"
+            android:textStyle="normal"
+            android:lineSpacingExtra="4dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

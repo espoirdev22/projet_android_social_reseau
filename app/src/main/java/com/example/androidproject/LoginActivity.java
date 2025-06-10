@@ -29,7 +29,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText emailEditText;
     private TextInputEditText passwordEditText;
     private CardView loginButton;
-    private CardView googleLoginButton;
     private TextView signUpText;
     private TextView forgotPasswordText;
 
@@ -59,9 +58,9 @@ public class LoginActivity extends AppCompatActivity {
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         loginButton = findViewById(R.id.loginButton);
-        googleLoginButton = findViewById(R.id.googleLoginButton);
+
         signUpText = findViewById(R.id.signUpText);
-        forgotPasswordText = findViewById(R.id.forgotPasswordText);
+
     }
 
     private void initializeSharedPreferences() {
@@ -93,21 +92,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        forgotPasswordText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Implémenter la récupération de mot de passe
-                Toast.makeText(LoginActivity.this, "Fonctionnalité à venir", Toast.LENGTH_SHORT).show();
-            }
-        });
 
-        googleLoginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: Implémenter la connexion Google
-                Toast.makeText(LoginActivity.this, "Connexion Google à venir", Toast.LENGTH_SHORT).show();
-            }
-        });
+
+
     }
 
     private void performLogin() {

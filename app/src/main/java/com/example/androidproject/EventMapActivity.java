@@ -262,7 +262,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         eventList.clear();
 
         Event event1 = new Event();
-        event1.setId("1");
+        event1.setId(Long.valueOf("1"));
         event1.setTitre("Concert au parc");
         event1.setDescription("Concert en plein air");
         event1.setDate("15 mai 2025");
@@ -271,7 +271,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         event1.setLongitude(2.3522);
 
         Event event2 = new Event();
-        event2.setId("2");
+        event2.setId(Long.valueOf("2"));
         event2.setTitre("Exposition d'art");
         event2.setDescription("Exposition temporaire");
         event2.setDate("20 mai 2025");
@@ -280,7 +280,7 @@ public class EventMapActivity extends AppCompatActivity implements OnMapReadyCal
         event2.setLongitude(2.3376);
 
         Event event3 = new Event();
-        event3.setId("3");
+        event3.setId(Long.valueOf("3"));
         event3.setTitre("Festival de cinéma");
         event3.setDescription("Projections en plein air");
         event3.setDate("25 mai 2025");

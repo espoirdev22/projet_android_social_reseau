@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.androidproject.R;
 import com.example.androidproject.model.Event;
 
@@ -81,13 +82,13 @@ public class EventCardsAdapter extends RecyclerView.Adapter<EventCardsAdapter.Ev
 
             // Vous pouvez ajouter ici la logique pour charger des images
             // Par exemple avec Glide ou Picasso si vous avez des URLs d'images
-            // Glide.with(itemView.getContext())
-            //     .load(event.getImageUrl())
-            //     .placeholder(R.drawable.ic_event_placeholder)
-            //     .into(eventImage);
+            Glide.with(itemView.getContext())
+                .load(event.getImage())
+              .placeholder(R.drawable.ic_event_placeholder)
+               .into(eventImage);
 
             // Pour l'instant, on utilise une image par défaut
-            eventImage.setImageResource(R.drawable.ic_event_placeholder);
+           // eventImage.setImageResource(R.drawable.ic_event_placeholder);
         }
     }
 }

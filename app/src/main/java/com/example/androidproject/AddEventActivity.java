@@ -57,7 +57,6 @@ public class AddEventActivity extends AppCompatActivity {
     private static final String USER_ID_KEY = AppConstants.USER_ID_KEY;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
-    private static final int IMAGE_PICKER_REQUEST_CODE = 102;
 
     // ======================== COMPOSANTS UI ========================
     private EditText titleEditText;
@@ -85,10 +84,10 @@ public class AddEventActivity extends AppCompatActivity {
     private EditText longitudeEditText;
     private EditText locationEditText;
 
-    // Composants pour l'image
-    private ImageView eventImageView;
-    private View selectImageButton;
-    private LinearLayout imagePickerLayout;
+    // Composants pour l'URL d'image
+    private EditText imageUrlEditText;
+    private CardView imagePreviewCard;
+    private ImageView imagePreviewView;
 
     // ======================== VARIABLES DE LOCALISATION ========================
     private double selectedLatitude = 0.0;
@@ -105,7 +104,7 @@ public class AddEventActivity extends AppCompatActivity {
     private boolean isManualInputMode = false;
 
     // ======================== VARIABLES IMAGE ========================
-    private Uri selectedImageUri;
+    private String imageUrl = "";
 
     // ======================== API ========================
     private ApiService apiService;
@@ -114,6 +113,9 @@ public class AddEventActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_event);
+
+        getSupportActionBar().hide();
+
 
         initializeComponents();
         setupEventListeners();
@@ -163,13 +165,21 @@ public class AddEventActivity extends AppCompatActivity {
         longitudeEditText = findViewById(R.id.longitudeEditText);
         locationEditText = findViewById(R.id.locationEditText);
 
-        // Image components
-        eventImageView = findViewById(R.id.eventImageView);
-        selectImageButton = findViewById(R.id.selectImageButton);
-        imagePickerLayout = findViewById(R.id.imagePickerLayout);
+        // Composants pour l'URL d'image
+        imageUrlEditText = findViewById(R.id.imageUrlEditText);
+        imagePreviewCard = findViewById(R.id.imagePreviewCard);
+        imagePreviewView = findViewById(R.id.imagePreviewView);
 
         // Cacher les composants de localisation au début
         selectedLocationLayout.setVisibility(View.GONE);
+
+        AppCompatImageButton backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> {
+            // Redirect to HomeActivity
+            Intent intent = new Intent(AddEventActivity.this, HomeActivity.class);
+            startActivity(intent);
+            finish(); // Optionally finish this activity
+        });
     }
 
     private void setupEventListeners() {
@@ -218,9 +228,56 @@ public class AddEventActivity extends AppCompatActivity {
             }
         });
 
-        // Listener pour la sélection d'image via le layout cliquable
-        imagePickerLayout.setOnClickListener(v -> selectImage());
-        selectImageButton.setOnClickListener(v -> selectImage());
+        // Listener pour l'URL d'image
+        imageUrlEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String url = s.toString().trim();
+                if (isValidImageUrl(url)) {
+                    imageUrl = url;
+                    showImagePreview(url);
+                } else {
+                    imageUrl = "";
+                    hideImagePreview();
+                }
+            }
+        });
+    }
+
+    private boolean isValidImageUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return false;
+        }
+
+        // PROBLÈME: Validation trop restrictive
+        // SOLUTION: Ajouter validation des extensions d'image
+        String urlLower = url.toLowerCase();
+        return (url.startsWith("http://") || url.startsWith("https://")) &&
+                (urlLower.contains(".jpg") || urlLower.contains(".jpeg") ||
+                        urlLower.contains(".png") || urlLower.contains(".gif") ||
+                        urlLower.contains(".bmp") || urlLower.contains(".webp"));
+    }
+
+    private void showImagePreview(String url) {
+        // Ici vous pouvez utiliser une bibliothèque comme Picasso ou Glide pour charger l'image
+        // Pour l'instant, on montre juste le placeholder
+        imagePreviewCard.setVisibility(View.VISIBLE);
+
+        // Exemple avec Picasso (si vous l'utilisez) :
+        // Picasso.get().load(url).into(imagePreviewView);
+
+        // Pour l'instant, affichage d'un placeholder
+        Toast.makeText(this, "URL d'image détectée: " + url, Toast.LENGTH_SHORT).show();
+    }
+
+    private void hideImagePreview() {
+        imagePreviewCard.setVisibility(View.GONE);
     }
 
     private void switchToDatePickerMode() {
@@ -230,13 +287,16 @@ public class AddEventActivity extends AppCompatActivity {
         datePickerModeButton.setBackgroundResource(R.drawable.secondary_button_background);
         datePickerModeButton.setTextColor(getResources().getColor(android.R.color.white));
         manualInputModeButton.setBackgroundResource(R.drawable.edit_text_background);
-        //manualInputModeButton.setTextColor(getResources().getColor(R.color.text_gray));
+        manualInputModeButton.setTextColor(getResources().getColor(android.R.color.darker_gray));
 
         // Afficher/masquer les layouts appropriés
         datePickerLayout.setVisibility(View.VISIBLE);
         manualDateInputLayout.setVisibility(View.GONE);
 
-        Toast.makeText(this, "Mode sélecteur de date activé", Toast.LENGTH_SHORT).show();
+        // Effacer le texte de saisie manuelle
+        manualDateEditText.setText("");
+
+        Log.d(TAG, "Mode sélecteur de date activé");
     }
 
     private void switchToManualInputMode() {
@@ -246,117 +306,191 @@ public class AddEventActivity extends AppCompatActivity {
         manualInputModeButton.setBackgroundResource(R.drawable.secondary_button_background);
         manualInputModeButton.setTextColor(getResources().getColor(android.R.color.white));
         datePickerModeButton.setBackgroundResource(R.drawable.edit_text_background);
-        //datePickerModeButton.setTextColor(getResources().getColor(R.color.text_gray));
+        datePickerModeButton.setTextColor(getResources().getColor(android.R.color.darker_gray));
 
         // Afficher/masquer les layouts appropriés
         datePickerLayout.setVisibility(View.GONE);
         manualDateInputLayout.setVisibility(View.VISIBLE);
 
-        // Pré-remplir avec la date actuelle si elle existe
-        if (selectedDateTime != null) {
-            manualDateEditText.setText(manualInputFormat.format(selectedDateTime.getTime()));
-        }
-
-        Toast.makeText(this, "Mode saisie manuelle activé", Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "Mode saisie manuelle activé");
     }
 
-    private void validateAndParseManualDate(String dateString) {
-        if (dateString.length() >= 16) { // Format complet: JJ/MM/AAAA HH:MM
-            try {
-                Calendar parsedDate = Calendar.getInstance();
-                parsedDate.setTime(manualInputFormat.parse(dateString));
-                selectedDateTime = parsedDate;
+    private void validateAndParseManualDate(String input) {
+        TextView validationText = findViewById(R.id.manualDateValidationText);
 
-                // Mettre à jour l'affichage dans le sélecteur aussi
+        if (input.isEmpty()) {
+            validationText.setVisibility(View.GONE);
+            selectedDateTime = null;
+            return;
+        }
+
+        try {
+            Calendar tempCalendar = Calendar.getInstance();
+            tempCalendar.setTime(manualInputFormat.parse(input));
+
+            // Vérifier que la date n'est pas dans le passé
+            Calendar now = Calendar.getInstance();
+            if (tempCalendar.before(now)) {
+                validationText.setText("⚠️ La date ne peut pas être dans le passé");
+                validationText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                validationText.setVisibility(View.VISIBLE);
+                selectedDateTime = null;
+            } else {
+                selectedDateTime = tempCalendar;
+                validationText.setText("✓ Date valide");
+                validationText.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                validationText.setVisibility(View.VISIBLE);
+
+                // Mettre à jour les champs cachés pour compatibilité
                 updateDateTimeDisplay();
-
-                // Retirer l'erreur s'il y en avait une
-                manualDateEditText.setError(null);
-
-            } catch (ParseException e) {
-                manualDateEditText.setError("Format invalide (JJ/MM/AAAA HH:MM)");
             }
+        } catch (ParseException e) {
+            validationText.setText("❌ Format incorrect (JJ/MM/AAAA HH:MM)");
+            validationText.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            validationText.setVisibility(View.VISIBLE);
+            selectedDateTime = null;
         }
     }
 
     private void initializeDateTime() {
         selectedDateTime = Calendar.getInstance();
-        // Format pour l'affichage à l'utilisateur
-        dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        // Format pour l'API (format ISO)
+        dateFormat = new SimpleDateFormat("dd/MM/yyyy à HH:mm", Locale.FRANCE);
         apiDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        // Format pour la saisie manuelle
-        manualInputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        manualInputFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE);
 
+        // Initialiser avec une date par défaut (dans 1 heure)
+        selectedDateTime.add(Calendar.HOUR_OF_DAY, 1);
         updateDateTimeDisplay();
+    }
+
+    private void updateDateTimeDisplay() {
+        if (selectedDateTime != null) {
+            String formattedDate = dateFormat.format(selectedDateTime.getTime());
+
+            if (!isManualInputMode) {
+                // Mettre à jour l'affichage du sélecteur de date
+                TextView datePreview = findViewById(R.id.fullDateTimePreview);
+                if (datePreview != null) {
+                    datePreview.setText("Date et heure : " + formattedDate);
+                    datePreview.setVisibility(View.VISIBLE);
+                }
+
+                // Mettre à jour les textes des sélecteurs
+                TextView selectedDateText = findViewById(R.id.selectedDateTextView);
+                TextView selectedTimeText = findViewById(R.id.selectedTimeTextView);
+
+                if (selectedDateText != null) {
+                    SimpleDateFormat dateOnly = new SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE);
+                    selectedDateText.setText(dateOnly.format(selectedDateTime.getTime()));
+                    selectedDateText.setTextColor(getResources().getColor(android.R.color.black));
+                }
+
+                if (selectedTimeText != null) {
+                    SimpleDateFormat timeOnly = new SimpleDateFormat("HH:mm", Locale.FRANCE);
+                    selectedTimeText.setText(timeOnly.format(selectedDateTime.getTime()));
+                    selectedTimeText.setTextColor(getResources().getColor(android.R.color.black));
+                }
+            }
+
+            // Mettre à jour le champ caché pour compatibilité
+            if (dateTimeTextView != null) {
+                dateTimeTextView.setText(formattedDate);
+            }
+        }
+    }
+
+    private void showDateTimePicker() {
+        if (isManualInputMode) return;
+
+        // Afficher d'abord le sélecteur de date
+        android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    selectedDateTime.set(Calendar.YEAR, year);
+                    selectedDateTime.set(Calendar.MONTH, month);
+                    selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    // Ensuite afficher le sélecteur d'heure
+                    showTimePicker();
+                },
+                selectedDateTime.get(Calendar.YEAR),
+                selectedDateTime.get(Calendar.MONTH),
+                selectedDateTime.get(Calendar.DAY_OF_MONTH)
+        );
+
+        // Empêcher la sélection de dates passées
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+        datePickerDialog.show();
+    }
+
+    private void showTimePicker() {
+        android.app.TimePickerDialog timePickerDialog = new android.app.TimePickerDialog(
+                this,
+                (view, hourOfDay, minute) -> {
+                    selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    selectedDateTime.set(Calendar.MINUTE, minute);
+                    selectedDateTime.set(Calendar.SECOND, 0);
+
+                    updateDateTimeDisplay();
+                    Toast.makeText(this, "Date et heure sélectionnées", Toast.LENGTH_SHORT).show();
+                },
+                selectedDateTime.get(Calendar.HOUR_OF_DAY),
+                selectedDateTime.get(Calendar.MINUTE),
+                true // Format 24h
+        );
+
+        timePickerDialog.show();
     }
 
     private void initializeLocation() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         geocoder = new Geocoder(this, Locale.getDefault());
-    }
 
-    private void initializeApi() {
-        apiService = ApiClient.getClient().create(ApiService.class);
-        Log.d(TAG, "API service initialized");
-    }
-
-    private void showDateTimePicker() {
-        if (isManualInputMode) {
-            return; // Ne pas ouvrir le sélecteur en mode manuel
+        // Bouton de recherche
+        Button searchButton = findViewById(R.id.searchLocationButton);
+        if (searchButton != null) {
+            searchButton.setOnClickListener(v -> {
+                String query = locationSearchEditText.getText().toString().trim();
+                if (!query.isEmpty()) {
+                    searchLocation(query);
+                }
+            });
         }
-
-        Calendar calendar = selectedDateTime;
-
-        new android.app.DatePickerDialog(this,
-                (view, year, month, dayOfMonth) -> {
-                    calendar.set(Calendar.YEAR, year);
-                    calendar.set(Calendar.MONTH, month);
-                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                    new android.app.TimePickerDialog(this,
-                            (timeView, hourOfDay, minute) -> {
-                                calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                                calendar.set(Calendar.MINUTE, minute);
-                                selectedDateTime = calendar;
-                                updateDateTimeDisplay();
-
-                                // Mettre à jour aussi le champ manuel si il est visible
-                                if (isManualInputMode) {
-                                    manualDateEditText.setText(manualInputFormat.format(selectedDateTime.getTime()));
-                                }
-                            },
-                            calendar.get(Calendar.HOUR_OF_DAY),
-                            calendar.get(Calendar.MINUTE),
-                            true).show();
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)).show();
-    }
-
-    private void updateDateTimeDisplay() {
-        dateTimeTextView.setText(dateFormat.format(selectedDateTime.getTime()));
-    }
-
-    private void selectImage() {
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        startActivityForResult(intent, IMAGE_PICKER_REQUEST_CODE);
     }
 
     private void searchLocation(String query) {
-        if (geocoder != null) {
-            try {
-                List<Address> addresses = geocoder.getFromLocationName(query, 1);
-                if (!addresses.isEmpty()) {
-                    Address address = addresses.get(0);
-                    setSelectedLocation(address.getLatitude(), address.getLongitude(), formatAddress(address));
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Erreur lors de la recherche d'adresse", Toast.LENGTH_SHORT).show();
+        if (geocoder == null) return;
+
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(query, 5);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address bestMatch = addresses.get(0);
+
+                selectedLatitude = bestMatch.getLatitude();
+                selectedLongitude = bestMatch.getLongitude();
+                selectedAddress = bestMatch.getAddressLine(0);
+
+                // Mettre à jour l'affichage
+                selectedAddressTextView.setText(selectedAddress);
+                selectedCoordinatesTextView.setText(
+                        String.format(Locale.getDefault(), "Lat: %.6f, Lng: %.6f",
+                                selectedLatitude, selectedLongitude)
+                );
+
+                selectedLocationLayout.setVisibility(View.VISIBLE);
+
+                // Mettre à jour les champs cachés
+                latitudeEditText.setText(String.valueOf(selectedLatitude));
+                longitudeEditText.setText(String.valueOf(selectedLongitude));
+                locationEditText.setText(selectedAddress);
+
+                Toast.makeText(this, "Localisation trouvée", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Aucune localisation trouvée", Toast.LENGTH_SHORT).show();
             }
+        } catch (IOException e) {
+            Log.e(TAG, "Erreur lors de la recherche de localisation", e);
+            Toast.makeText(this, "Erreur de recherche", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -364,78 +498,26 @@ public class AddEventActivity extends AppCompatActivity {
         selectedLatitude = 0.0;
         selectedLongitude = 0.0;
         selectedAddress = "";
+
         selectedLocationLayout.setVisibility(View.GONE);
         locationSearchEditText.setText("");
 
+        // Effacer les champs cachés
         latitudeEditText.setText("");
         longitudeEditText.setText("");
         locationEditText.setText("");
 
-        Toast.makeText(this, "Localisation supprimée", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Localisation effacée", Toast.LENGTH_SHORT).show();
     }
 
-    private void setSelectedLocation(double latitude, double longitude, String address) {
-        selectedLatitude = latitude;
-        selectedLongitude = longitude;
-        selectedAddress = address;
-
-        selectedAddressTextView.setText(address);
-        selectedCoordinatesTextView.setText(
-                String.format(Locale.getDefault(), "Lat: %.6f, Lng: %.6f", latitude, longitude)
-        );
-        selectedLocationLayout.setVisibility(View.VISIBLE);
-
-        latitudeEditText.setText(String.valueOf(latitude));
-        longitudeEditText.setText(String.valueOf(longitude));
-        locationEditText.setText(address);
-
-        locationSearchEditText.setText("");
-    }
-
-    private String formatAddress(Address address) {
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(address.getAddressLine(i));
-        }
-
-        if (sb.length() == 0) {
-            if (address.getThoroughfare() != null) {
-                sb.append(address.getThoroughfare());
-            }
-            if (address.getLocality() != null) {
-                if (sb.length() > 0) sb.append(", ");
-                sb.append(address.getLocality());
-            }
-            if (address.getCountryName() != null) {
-                if (sb.length() > 0) sb.append(", ");
-                sb.append(address.getCountryName());
-            }
-        }
-
-        return sb.toString();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == RESULT_OK && data != null && requestCode == IMAGE_PICKER_REQUEST_CODE) {
-            selectedImageUri = data.getData();
-            eventImageView.setImageURI(selectedImageUri);
-            eventImageView.setVisibility(View.VISIBLE);
-
-            // Cacher les éléments de placeholder
-            findViewById(R.id.cameraIcon).setVisibility(View.GONE);
-            findViewById(R.id.uploadImageText).setVisibility(View.GONE);
-        }
+    private void initializeApi() {
+        apiService = ApiClient.getClient().create(ApiService.class);
     }
 
     private void saveEvent() {
+        // Validation des champs obligatoires
         String title = titleEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
-        String dateTime = dateTimeTextView.getText().toString().trim();
 
         if (title.isEmpty()) {
             titleEditText.setError("Le titre est obligatoire");
@@ -449,124 +531,86 @@ public class AddEventActivity extends AppCompatActivity {
             return;
         }
 
-        if (dateTime.isEmpty()) {
-            Toast.makeText(this, "Veuillez sélectionner une date et une heure", Toast.LENGTH_SHORT).show();
+        if (selectedDateTime == null) {
+            Toast.makeText(this, "Veuillez sélectionner une date et heure", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Validation supplémentaire pour la saisie manuelle
-        if (isManualInputMode) {
-            String manualDate = manualDateEditText.getText().toString().trim();
-            if (manualDate.length() < 16) {
-                manualDateEditText.setError("Veuillez entrer une date complète (JJ/MM/AAAA HH:MM)");
-                manualDateEditText.requestFocus();
-                return;
-            }
-        }
-
-        // Vérifier si l'utilisateur est connecté
-        String token = getAuthToken();
-        if (token == null || token.isEmpty()) {
-            Toast.makeText(this, "Vous devez être connecté pour créer un événement", Toast.LENGTH_SHORT).show();
-            redirectToLogin();
-            return;
-        }
-
-        // Créer correctement l'objet Event
+        // ==================== CORRECTION POUR L'URL D'IMAGE ====================
         Event event = new Event();
+
+        // Champs avec @SerializedName
         event.setTitre(title);
         event.setDescription(description);
-
-        // Utiliser le format de date ISO pour l'API
         event.setDate(apiDateFormat.format(selectedDateTime.getTime()));
+        event.setLieu(selectedAddress.isEmpty() ? "Non spécifié" : selectedAddress);
+        event.setLatitude(selectedLatitude);
+        event.setLongitude(selectedLongitude);
 
-        // Définir la localisation avec les noms de champs corrects
-        if (selectedLatitude != 0.0 && selectedLongitude != 0.0) {
-            event.setLatitude(selectedLatitude);
-            event.setLongitude(selectedLongitude);
-            // Utiliser setLieu() qui sera mappé à "lieu" dans le JSON
-            event.setLieu(selectedAddress);
+        // CORRECTION: Récupérer directement depuis le champ EditText
+        String imageUrlFromInput = imageUrlEditText.getText().toString().trim();
+
+        // Log pour debug
+        Log.d(TAG, "URL d'image saisie: " + imageUrlFromInput);
+        Log.d(TAG, "Variable imageUrl: " + imageUrl);
+
+        // Utiliser l'URL du champ de saisie si elle n'est pas vide
+        if (!imageUrlFromInput.isEmpty()) {
+            event.setImage(imageUrlFromInput);
+            Log.d(TAG, "URL d'image assignée à l'événement: " + imageUrlFromInput);
         } else {
-            String locationText = locationSearchEditText.getText().toString().trim();
-            if (!locationText.isEmpty()) {
-                event.setLieu(locationText);
-            }
+            event.setImage(null);
+            Log.d(TAG, "Aucune URL d'image fournie");
         }
 
-        // Définir l'image si elle est sélectionnée
-        if (selectedImageUri != null) {
-            event.setImage(selectedImageUri.toString());
-        }
+        // Champs additionnels
+        event.setEventType("Événement");
+        event.setPrice("Gratuit");
+        event.setOrganizerName(null);
+        event.setLocation(selectedAddress.isEmpty() ? "Non spécifié" : selectedAddress);
 
-        // Le user_id est géré par le serveur avec Auth::id()
-        // Donc pas besoin de le définir ici
+        // Désactiver le bouton pour éviter les doubles clics
+        saveEventButton.setEnabled(false);
+        saveEventButton.setText("Enregistrement...");
 
-        Log.d(TAG, "Creating event: " + event.toString());
-        saveEventToApi(event);
-    }
-
-    private void saveEventToApi(Event event) {
+        // Appel API
         String token = getAuthToken();
-
         if (token == null || token.isEmpty()) {
             Toast.makeText(this, "Erreur d'authentification", Toast.LENGTH_SHORT).show();
             redirectToLogin();
             return;
         }
 
-        saveEventButton.setEnabled(false);
-        saveEventButton.setText("Enregistrement...");
-
-        String authHeader = "Bearer " + token;
-
-        Log.d(TAG, "Sending event to API with auth token: " + authHeader.substring(0, Math.min(15, authHeader.length())) + "...");
-        Log.d(TAG, "Event data: " + event.toString());
-
-        Call<ApiResponse<Event>> call = apiService.createEvent(authHeader, event);
-
+        Call<ApiResponse<Event>> call = apiService.createEvent("Bearer " + token, event);
         call.enqueue(new Callback<ApiResponse<Event>>() {
             @Override
             public void onResponse(Call<ApiResponse<Event>> call, Response<ApiResponse<Event>> response) {
                 saveEventButton.setEnabled(true);
                 saveEventButton.setText("Enregistrer l'événement");
 
-                Log.d(TAG, "API Response code: " + response.code());
-
                 if (response.isSuccessful() && response.body() != null) {
-                    Log.d(TAG, "Event creation successful");
                     ApiResponse<Event> apiResponse = response.body();
-
                     if (apiResponse.isSuccess()) {
-                        Toast.makeText(AddEventActivity.this,
-                                apiResponse.getMessage() != null ? apiResponse.getMessage() : "Événement créé avec succès",
-                                Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(AddEventActivity.this, HomeActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
+                        Toast.makeText(AddEventActivity.this, "Événement créé avec succès!", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
                         finish();
                     } else {
-                        Log.e(TAG, "API error: " + apiResponse.getMessage());
                         Toast.makeText(AddEventActivity.this,
-                                apiResponse.getMessage() != null ? apiResponse.getMessage() : "Erreur lors de la création",
-                                Toast.LENGTH_LONG).show();
+                                "Erreur: " + apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    try {
-                        String errorBody = response.errorBody() != null ?
-                                response.errorBody().string() : "Unknown error";
-                        Log.e(TAG, "Error response: " + errorBody + ", code: " + response.code());
-                        Toast.makeText(AddEventActivity.this, "Erreur: " + errorBody, Toast.LENGTH_LONG).show();
-                    } catch (IOException e) {
-                        Log.e(TAG, "Cannot read error body", e);
+                    Log.e(TAG, "Erreur de réponse: " + response.code());
+                    if (response.errorBody() != null) {
+                        try {
+                            String errorBody = response.errorBody().string();
+                            Log.e(TAG, "Corps de l'erreur: " + errorBody);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Impossible de lire le corps de l'erreur", e);
+                        }
                     }
-
-                    if (response.code() == 401) {
-                        Toast.makeText(AddEventActivity.this, "Session expirée", Toast.LENGTH_SHORT).show();
-                        redirectToLogin();
-                    } else {
-                        Toast.makeText(AddEventActivity.this, "Erreur serveur: " + response.code(), Toast.LENGTH_LONG).show();
-                    }
+                    Toast.makeText(AddEventActivity.this,
+                            "Erreur lors de la création de l'événement (Code: " + response.code() + ")",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -575,24 +619,44 @@ public class AddEventActivity extends AppCompatActivity {
                 saveEventButton.setEnabled(true);
                 saveEventButton.setText("Enregistrer l'événement");
 
-                Log.e(TAG, "Network error", t);
-                Toast.makeText(AddEventActivity.this, "Erreur réseau: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e(TAG, "Erreur réseau", t);
+                Toast.makeText(AddEventActivity.this,
+                        "Erreur de connexion: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void setupImageUrlListener() {
+        imageUrlEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String url = s.toString().trim();
+
+                // Log pour debug
+                Log.d(TAG, "URL d'image modifiée: " + url);
+
+                // Validation simple
+                if (!url.isEmpty() && (url.startsWith("http://") || url.startsWith("https://"))) {
+                    imageUrl = url; // Mettre à jour la variable globale
+                    showImagePreview(url);
+                    Log.d(TAG, "URL d'image valide assignée: " + url);
+                } else {
+                    imageUrl = ""; // Réinitialiser si invalide
+                    hideImagePreview();
+                    Log.d(TAG, "URL d'image invalide ou vide");
+                }
             }
         });
     }
 
     private String getAuthToken() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String token = prefs.getString(TOKEN_KEY, null);
-        Log.d(TAG, "Token récupéré: " + (token != null ? token.substring(0, Math.min(10, token.length())) + "..." : "null"));
-        return token;
-    }
-
-    private Long getCurrentUserId() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        long userId = prefs.getLong(USER_ID_KEY, -1);
-        Log.d(TAG, "User ID récupéré: " + (userId != -1 ? userId : "non défini"));
-        return userId;
+        return prefs.getString(TOKEN_KEY, null);
     }
 
     private void redirectToLogin() {
@@ -602,82 +666,9 @@ public class AddEventActivity extends AppCompatActivity {
         finish();
     }
 
-    public static String getAuthToken(android.content.Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
-        return prefs.getString(TOKEN_KEY, null);
-    }
-
-    public static Long getUserId(android.content.Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
-        long userId = prefs.getLong(USER_ID_KEY, -1);
-        return userId != -1 ? userId : null;
-    }
-
-    // Méthode pour obtenir la localisation actuelle
-    private void getCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-            return;
-        }
-
-        fusedLocationProviderClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        if (location != null) {
-                            try {
-                                List<Address> addresses = geocoder.getFromLocation(
-                                        location.getLatitude(), location.getLongitude(), 1);
-
-                                if (!addresses.isEmpty()) {
-                                    Address address = addresses.get(0);
-                                    setSelectedLocation(location.getLatitude(), location.getLongitude(), formatAddress(address));
-                                } else {
-                                    setSelectedLocation(location.getLatitude(), location.getLongitude(), "Emplacement actuel");
-                                }
-                            } catch (IOException e) {
-                                Log.e(TAG, "Geocoder error", e);
-                                setSelectedLocation(location.getLatitude(), location.getLongitude(), "Emplacement actuel");
-                            }
-                        } else {
-                            Toast.makeText(AddEventActivity.this, "Impossible d'obtenir la localisation actuelle", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getCurrentLocation();
-            } else {
-                Toast.makeText(this, "Permission de localisation refusée", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Demander confirmation si l'utilisateur a commencé à remplir le formulaire
-        if (!titleEditText.getText().toString().isEmpty() ||
-                !descriptionEditText.getText().toString().isEmpty() ||
-                selectedImageUri != null) {
-
-            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-            builder.setTitle("Quitter sans enregistrer ?");
-            builder.setMessage("Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter ?");
-            builder.setPositiveButton("Quitter", (dialog, which) -> {
-                super.onBackPressed();
-            });
-            builder.setNegativeButton("Rester", (dialog, which) -> {
-                dialog.dismiss();
-            });
-            builder.show();
-        } else {
-            super.onBackPressed();
-        }
+    protected void onDestroy() {
+        super.onDestroy();
+        // Nettoyer les ressources si nécessaire
     }
 }
